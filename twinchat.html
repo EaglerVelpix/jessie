@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TwinkChat Jessie V1.1 💖 (Private)</title>
+  <style>
+    body{margin:0;padding:0;font-family:Segoe UI,sans-serif;background:#1e1e2f;color:#fff;display:flex;flex-direction:column;height:100vh}
+    header{background:#ff69b4;color:#fff;padding:1rem;text-align:center;font-size:1.6rem;font-weight:bold}
+    .chat-container{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column}
+    .message{max-width:70%;padding:.8rem;margin:.5rem 0;border-radius:10px;line-height:1.4}
+    .user-message{align-self:flex-end;background:#6a5acd}
+    .bot-message{align-self:flex-start;background:#ffb6c1;position:relative;padding-left:3.5rem}
+    .bot-avatar{position:absolute;top:.5rem;left:.5rem;width:2.5rem;height:2.5rem;border-radius:50%;object-fit:cover;border:2px solid white}
+    form{display:flex;padding:1rem;background:#2e2e40}
+    input[type="text"]{flex:1;padding:.8rem;font-size:1rem;border:none;border-radius:5px;margin-right:.5rem}
+    button{padding:.8rem 1.2rem;background:#ff69b4;color:#fff;border:none;border-radius:5px;cursor:pointer}
+    button:hover{background:#ff85c1}
+    .status{padding:.5rem 1rem;font-size:.9rem;color:#333;background:#ffd6e8;text-align:center}
+  </style>
+</head>
+<body>
+  <header>💋 TwinkChat - TwinkGPT (Private)</header>
+
+  <div id="status" class="status">API key is hardcoded — private use only.</div>
+  <div class="chat-container" id="chat"></div>
+
+  <form id="chat-form">
+    <input id="user-input" type="text" placeholder="Type something spicy..." autocomplete="off" required />
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    // ---------- REPLACE THIS WITH YOUR KEY ----------
+    const API_KEY = "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"; 
+    // ------------------------------------------------
+
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+
+    function addMessage(message, sender) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message", sender === "user" ? "user-message" : "bot-message");
+      msgDiv.textContent = message;
+
+      if (sender === "bot") {
+        const avatar = document.createElement("img");
+        avatar.src = "Jessie.png"; // optional
+        avatar.alt = "TwinkGPT";
+        avatar.className = "bot-avatar";
+        msgDiv.appendChild(avatar);
+      }
+
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function callOpenAI(messageText) {
+      const url = "https://api.openai.com/v1/chat/completions";
+      const payload = {
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: messageText }],
+        max_tokens: 500
+      };
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text().catch(()=>"");
+        throw new Error("OpenAI API error: " + resp.status + " " + resp.statusText + " " + txt);
+      }
+
+      const data = await resp.json();
+      return data?.choices?.[0]?.message?.content ?? "⚠️ No reply.";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      userInput.value = "";
+      try {
+        const botReply = await callOpenAI(text);
+        addMessage(botReply, "bot");
+      } catch (err) {
+        console.error(err);
+        addMessage("⚠️ Oops! Something went wrong. See console for details.", "bot");
+      }
+    });
+  </script>
+</body>
+</html>

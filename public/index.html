@@ -22,7 +22,7 @@
 <body>
   <header>💋 TwinkChat - TwinkGPT (Private)</header>
 
-  <div id="status" class="status">API key is hardcoded — private use only.</div>
+  <div id="status" class="status">Secure: API key hidden in backend 🔒</div>
   <div class="chat-container" id="chat"></div>
 
   <form id="chat-form">
@@ -31,10 +31,6 @@
   </form>
 
   <script>
-    // ---------- REPLACE THIS WITH YOUR KEY ----------
-    const API_KEY = "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"; 
-    // ------------------------------------------------
-
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
     const userInput = document.getElementById("user-input");
@@ -46,7 +42,7 @@
 
       if (sender === "bot") {
         const avatar = document.createElement("img");
-        avatar.src = "Jessie.png"; // optional
+        avatar.src = "Jessie.png"; // optional avatar
         avatar.alt = "TwinkGPT";
         avatar.className = "bot-avatar";
         msgDiv.appendChild(avatar);
@@ -56,26 +52,16 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    async function callOpenAI(messageText) {
-      const url = "https://api.openai.com/v1/chat/completions";
-      const payload = {
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: messageText }],
-        max_tokens: 500
-      };
-
-      const resp = await fetch(url, {
+    async function callBackend(messageText) {
+      const resp = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + API_KEY
-        },
-        body: JSON.stringify(payload)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageText })
       });
 
       if (!resp.ok) {
         const txt = await resp.text().catch(()=>"");
-        throw new Error("OpenAI API error: " + resp.status + " " + resp.statusText + " " + txt);
+        throw new Error("Server error: " + resp.status + " " + txt);
       }
 
       const data = await resp.json();
@@ -89,7 +75,7 @@
       addMessage(text, "user");
       userInput.value = "";
       try {
-        const botReply = await callOpenAI(text);
+        const botReply = await callBackend(text);
         addMessage(botReply, "bot");
       } catch (err) {
         console.error(err);
